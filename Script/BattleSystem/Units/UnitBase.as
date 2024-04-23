@@ -67,8 +67,6 @@ class AUnitBase : ACharacter
                 //TODO: dead
                 Print("Unit is dead!");
                 BattleGameMode.UnitDied(this);
-
-                DestroyActor();
                 return;
             }
         }
@@ -97,6 +95,11 @@ class AUnitBase : ACharacter
         TArray<FStatModifier> ModifiersToRemove;
         for (FStatModifier& Modifier : StatModifiers)
         {
+            // if turn duration is -1 then it is infinite
+            if (Modifier.TurnDuration == -1)
+            {
+                continue;
+            }
             Modifier.TurnDuration -= 1;
             if (Modifier.TurnDuration <= 0)
             {

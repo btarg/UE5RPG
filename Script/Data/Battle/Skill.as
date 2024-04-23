@@ -39,7 +39,9 @@ struct FSkill {
     bool bCanTargetEnemies;
 
     UPROPERTY(Category = "Stat Modifier")
-    FName StatModifier; // stat modifier to apply if skill is ST_MODIFIER
+    FName StatModifierToApply; // stat modifier to apply if skill is ST_MODIFIER
     UPROPERTY(Category = "Stat Modifier")
     float StatModifierApplicationChance; // chance to apply the stat modifier (0-1)
+    UPROPERTY(Category = "Stat Modifier")
+    FStatModifier JunctionedStatModifier; // stat modifier to apply permanently while junctioned
 }

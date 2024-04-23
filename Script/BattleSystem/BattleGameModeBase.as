@@ -45,6 +45,7 @@ class ABattleGameModeBase : AGameModeBase
     void UnitDied(AUnitBase Unit)
     {
         RemoveUnitFromBattle(Unit);
+        Unit.DestroyActor();
     }
 
     UFUNCTION(BlueprintEvent, BlueprintCallable)
@@ -104,10 +105,6 @@ class ABattleGameModeBase : AGameModeBase
             EndBattle();
             return;
         }
-
-        ESkillResult useSkill = EnemyTurnOrder[0].CombatComponent.UseSkill(n"TestSkill", PlayerTurnOrder[0]);
-        Print("Skill result: " + useSkill);
-
 
         TArray<AUnitBase> CurrentTurnOrder = bIsPlayerTurn ? PlayerTurnOrder : EnemyTurnOrder;
         if (CurrentTurnOrder.IsValidIndex(CurrentTurnIndex))

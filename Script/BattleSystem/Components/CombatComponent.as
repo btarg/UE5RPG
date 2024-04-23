@@ -15,26 +15,37 @@ class UCombatComponent : UActorComponent
 {
 
     UFUNCTION()
-    ESkillResult UseSkill(FName SkillName, AUnitBase& Target, bool bIsReflected = false)
+    bool GetSkillByName(FName SkillName, FSkill& OutSkill)
+    {
+        AUnitBase User = Cast<AUnitBase>(GetOwner());
+        if (User == nullptr) {
+            return false;
+        }
+    
+        UObject TableObject = LoadObject(UDataTable::StaticClass(), "/Game/Data/SkillTable.SkillTable");
+        UDataTable SkillDataTable = Cast<UDataTable>(TableObject);
+        return SkillDataTable.FindRow(SkillName, OutSkill);
+    }
+
+    UFUNCTION()
+    ESkillResult UseSkillByName(FName SkillName, AUnitBase& Target, bool bIsReflected = false)
+    {
+        FSkill Skill;
+        if (!GetSkillByName(SkillName, Skill)) {
+            return ESkillResult::SR_Fail;
+        }
+        Print("Using skill " + Skill.Name + " on " + Target.CurrentDisplayName);
+        return UseSkill(Skill, Target, bIsReflected);
+    }
+
+    UFUNCTION()
+    ESkillResult UseSkill(FSkill Skill, AUnitBase& Target, bool bIsReflected = false)
     {
         AUnitBase User = Cast<AUnitBase>(GetOwner());
         if (User == nullptr) {
             return ESkillResult::SR_Fail;
         }
 
-        if (bIsReflected) {
-            Print("Reflected skill!");
-        }
-        Print(User.CurrentDisplayName + " uses " + SkillName.ToString() + " on " + Target.CurrentDisplayName + "!");
-
-        UObject TableObject = LoadObject(UDataTable::StaticClass(), "/Game/Data/SkillTable.SkillTable");
-        UDataTable SkillDataTable = Cast<UDataTable>(TableObject);
-        FSkill Skill;
-        bool found = SkillDataTable.FindRow(SkillName, Skill);
-        if (!found) {
-            // Skill doesn't exist
-            return ESkillResult::SR_Fail;
-        }
         if (Skill.bCostsHP && User.CurrentHP < Skill.Cost) {
             Print("Not enough HP!");
             return ESkillResult::SR_NotEnoughHP;
@@ -83,7 +94,7 @@ class UCombatComponent : UActorComponent
                         Result = ESkillResult::SR_Absorbed;
                     } else if (Affinity.AffinityType == EAffinityType::Reflect && !bIsReflected) {
                         // Reflect the damage back to the user only if not already reflected
-                        Target.CombatComponent.UseSkill(SkillName, User, true);
+                        Target.CombatComponent.UseSkill(Skill, User, true);
                         return ESkillResult::SR_Reflected;
                     }
                 }
@@ -110,11 +121,16 @@ class UCombatComponent : UActorComponent
         else if (Skill.Type == ESkillType::ST_Heal) {
             Target.CurrentHP += Damage;
         } else if (Skill.Type == ESkillType::ST_Modifier) {
-            Target.AddStatModifierByName(Skill.StatModifier);
+            
+            // use random chance to apply the modifier
+            float Random = Math::RandRange(0.0f, 1.0f);
+            if (Random > Skill.StatModifierApplicationChance) {
+                return ESkillResult::SR_Fail;
+            }
+            Target.AddStatModifierByName(Skill.StatModifierToApply);
         }
 
 
         return Result;
-
     }
 }
