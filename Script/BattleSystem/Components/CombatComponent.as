@@ -34,13 +34,13 @@ class UCombatComponent : UActorComponent
         if (!GetSkillByName(SkillName, Skill)) {
             return ESkillResult::SR_Fail;
         }
-        Print("Using skill " + Skill.Name + " on " + Target.CurrentDisplayName);
         return UseSkill(Skill, Target, bIsReflected);
     }
 
     UFUNCTION()
     ESkillResult UseSkill(FSkill Skill, AUnitBase& Target, bool bIsReflected = false)
     {
+        Print("Using skill " + Skill.Name + " on " + Target.CurrentDisplayName);
         AUnitBase User = Cast<AUnitBase>(GetOwner());
         if (User == nullptr) {
             return ESkillResult::SR_Fail;
@@ -55,7 +55,7 @@ class UCombatComponent : UActorComponent
             return ESkillResult::SR_NotEnoughSP;
         }
         if (Skill.bCostsHP) {
-            User.TakeDamage(Skill.Cost);
+            User.TakeDamage(Skill.Cost, UAlmightyDamage::StaticClass(), User);
         } else {
             User.CurrentSP -= Skill.Cost;
         }
@@ -115,7 +115,7 @@ class UCombatComponent : UActorComponent
                 Damage *= CritDamageMultiplier;
             }
 
-            Target.TakeDamage(Damage);
+            Target.TakeDamage(Damage, Skill.DamageType, User);
 
         }
         else if (Skill.Type == ESkillType::ST_Heal) {

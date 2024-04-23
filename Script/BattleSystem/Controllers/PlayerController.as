@@ -23,28 +23,29 @@ class ABattlePlayerControllerBase : APlayerController
         InputComponent.BindAction(Action, ETriggerEvent::Triggered, FEnhancedInputActionHandlerDynamicSignature(this, n"NextTurnInput"));
 
     }
+
+    UFUNCTION()
+    void PlayerUseSkill(FSkill Skill) {
+        if (BattleGameMode == nullptr) return;
+        AUnitBase CurrentCharacter = BattleGameMode.CurrentUnit;
+        if (CurrentCharacter == nullptr) return;
+        if (CurrentCharacter.Character.IsPlayerCharacter)
+        {
+            APlayerUnitBase PlayerUnit = Cast<APlayerUnitBase>(CurrentCharacter);
+            if (PlayerUnit != nullptr && BattleGameMode.EnemyTurnOrder.Num() > 0) {
+                AUnitBase Target = BattleGameMode.EnemyTurnOrder[0];
+                if (Target != nullptr) {
+                    PlayerUnit.CombatComponent.UseSkill(Skill, Target);
+                }
+            }
+        }
+        BattleGameMode.ReadyNextTurn();
+    }
+
     UFUNCTION()
     void NextTurnInput(FInputActionValue ActionValue, float32 ElapsedTime, float32 TriggeredTime, UInputAction SourceAction)
     {
         if (BattleGameMode == nullptr) return;
-    
-        AUnitBase CurrentCharacter = BattleGameMode.CurrentUnit;
-        if (CurrentCharacter == nullptr) return;
-    
-        if (CurrentCharacter.Character.IsPlayerCharacter)
-        {
-            APlayerUnitBase PlayerCharacter = Cast<APlayerUnitBase>(CurrentCharacter);
-            if (PlayerCharacter != nullptr) {
-                if (PlayerCharacter.InventoryComponent.LearnedSkills.Num() > 0 && BattleGameMode.EnemyTurnOrder.Num() > 0)
-                {
-                    FName FirstSkill = PlayerCharacter.InventoryComponent.LearnedSkills[0];
-                    AUnitBase Target = BattleGameMode.EnemyTurnOrder[0];
-                    if (Target != nullptr) {
-                        PlayerCharacter.CombatComponent.UseSkillByName(FirstSkill, Target);
-                    }
-                }
-            }
-        }
         BattleGameMode.ReadyNextTurn();
     }
 

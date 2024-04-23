@@ -56,16 +56,17 @@ class AUnitBase : ACharacter
     }
 
     UFUNCTION()
-    void TakeDamage(int32 Damage) {
+    void TakeDamage(int32 Damage, TSubclassOf<UDamageType> DamageType, AUnitBase Attacker) {
         CurrentHP -= Damage;
-        Print(Character.DisplayName + " has " + CurrentHP + " HP left.");
+        Print(Character.DisplayName + " took " + Damage + " damage from " + Attacker.Character.DisplayName);
+        Print("Damage type: " + DamageType.Get());
         if (CurrentHP <= 0)
         {
             CurrentHP = 0;
             if (BattleGameMode != nullptr)
             {
                 //TODO: dead
-                Print("Unit is dead!");
+                Print("Unit was killed by " + Attacker.Character.DisplayName);
                 BattleGameMode.UnitDied(this);
                 return;
             }
