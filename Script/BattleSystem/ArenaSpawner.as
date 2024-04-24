@@ -45,7 +45,6 @@ class AArenaSpawner : AActor
         GetAllActorsOfClass(ABattlePosition::StaticClass(), BattlePositions);
         SpawnEnemies(Encounter.Enemies);
 
-        //TODO: spawn players
         ARPGPlayerStateBase PlayerState = Cast<ARPGPlayerStateBase>(Gameplay::GetPlayerState(0));
         if (PlayerState == nullptr) {
             Print("Null PlayerState");

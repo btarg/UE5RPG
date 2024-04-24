@@ -1,5 +1,5 @@
-event void FBattleStartedEvent();
 event void FBattleEndedEvent();
+event void FBattleStartedEvent();
 event void FUnitTurnStartedEvent(AUnitBase Unit);
 event void FUnitTurnEndedEvent(AUnitBase Unit);
 
@@ -9,6 +9,13 @@ class ABattleGameModeBase : AGameModeBase
     TArray<AUnitBase> PlayerTurnOrder;
     UPROPERTY()
     TArray<AUnitBase> EnemyTurnOrder;
+
+    // All enemies in battle
+    UPROPERTY(BlueprintReadOnly)
+    TArray<AUnitBase> EnemyUnits;
+    // All enemies in battle
+    UPROPERTY(BlueprintReadOnly)
+    TArray<AUnitBase> PlayerUnits;
     
     UPROPERTY()
     TArray<AUnitBase> UnitsInBattle;
@@ -36,17 +43,15 @@ class ABattleGameModeBase : AGameModeBase
     UPROPERTY()
     FUnitTurnEndedEvent OnUnitTurnEnded;
     
-    UFUNCTION(BlueprintOverride)
-    void BeginPlay()
-    {
-        OnBattleEnded.AddUFunction(this, n"EndBattle");
-    }
-
     UFUNCTION(BlueprintCallable)
     void AddUnitToBattle(AUnitBase Unit)
     {
         UnitsInBattle.Add(Unit);
-        bCanStartBattle = PlayerTurnOrder.IsEmpty() || EnemyTurnOrder.IsEmpty();
+        if (Unit.Character.IsPlayerCharacter) {
+            PlayerUnits.Add(Unit);
+        } else {
+            EnemyUnits.Add(Unit);
+        }
     }
     UFUNCTION(BlueprintCallable)
     void RemoveUnitFromBattle(AUnitBase Unit)
@@ -54,13 +59,13 @@ class ABattleGameModeBase : AGameModeBase
         UnitsInBattle.Remove(Unit);
         if (Unit.Character.IsPlayerCharacter)
         {
-            PlayerTurnOrder.Remove(Unit);
+            PlayerUnits.Remove(Unit);
         }
         else
         {
-            EnemyTurnOrder.Remove(Unit);
+            EnemyUnits.Remove(Unit);
         }
-        bCanStartBattle = PlayerTurnOrder.IsEmpty() || EnemyTurnOrder.IsEmpty();
+        bCanStartBattle = PlayerUnits.Num() > 0 && EnemyUnits.Num() > 0;
     }
     UFUNCTION(BlueprintCallable)
     void UnitDied(AUnitBase Unit)
@@ -74,14 +79,9 @@ class ABattleGameModeBase : AGameModeBase
         if (!bCanStartBattle) return;
         bIsPlayerTurn = bIsAmbush;
         
-        TArray<AUnitBase> EnemyUnits;
-
         CharacterCounts.Empty();
         for (AUnitBase Unit : UnitsInBattle) {
             Unit.BeginBattle();
-            if (!Unit.Character.IsPlayerCharacter) {
-                EnemyUnits.Add(Unit);
-            }
         }
         if (EnemyUnits.Num() > 1) {
             for (AUnitBase Unit : EnemyUnits) {
@@ -94,13 +94,15 @@ class ABattleGameModeBase : AGameModeBase
                 Unit.Character.DisplayName = CharacterName + " " + GetLetter(Count);
             }
         }
-        
-        bIsInBattle = true;        
+
+        bIsInBattle = true;
         CalculateTurnOrder();
-
         ReadyNextTurn();
+        
+        OnBattleStarted.Broadcast();
+        
     }
-
+    
     FString GetLetter(int32 Index)
     {
         FString Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -116,15 +118,15 @@ class ABattleGameModeBase : AGameModeBase
         Print("Battle has ended.");
         bIsInBattle = false;
         bCanStartBattle = false;
+        OnBattleEnded.Broadcast();
     }
 
     UFUNCTION(BlueprintCallable)
     void ReadyNextTurn()
     {
-        OnUnitTurnEnded.Broadcast(CurrentUnit);
-        if (PlayerTurnOrder.IsEmpty() || EnemyTurnOrder.IsEmpty() || !bCanStartBattle)
+        if (!bCanStartBattle)
         {
-            OnBattleEnded.Broadcast();
+            EndBattle();
             return;
         }
 
@@ -132,7 +134,6 @@ class ABattleGameModeBase : AGameModeBase
         if (CurrentTurnOrder.IsValidIndex(CurrentTurnIndex))
         {
             CurrentUnit = CurrentTurnOrder[CurrentTurnIndex];
-            CurrentUnit.StartUnitTurn();
             OnUnitTurnStarted.Broadcast(CurrentUnit);
             CurrentTurnIndex++;
         }

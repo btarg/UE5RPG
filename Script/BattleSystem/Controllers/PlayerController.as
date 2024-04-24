@@ -25,7 +25,7 @@ class ABattlePlayerControllerBase : APlayerController
     }
 
     UFUNCTION()
-    void PlayerUseSkill(FSkill Skill) {
+    void PlayerUseSkill(FSkill SkillToUse) {
         if (BattleGameMode == nullptr) return;
         AUnitBase CurrentCharacter = BattleGameMode.CurrentUnit;
         if (CurrentCharacter == nullptr) return;
@@ -35,7 +35,7 @@ class ABattlePlayerControllerBase : APlayerController
             if (PlayerUnit != nullptr && BattleGameMode.EnemyTurnOrder.Num() > 0) {
                 AUnitBase Target = BattleGameMode.EnemyTurnOrder[0];
                 if (Target != nullptr) {
-                    PlayerUnit.CombatComponent.UseSkill(Skill, Target);
+                    PlayerUnit.CombatComponent.UseSkill(SkillToUse, Target);
                 }
             }
         }

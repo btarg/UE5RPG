@@ -124,7 +124,7 @@ class UCombatComponent : UActorComponent
             
             // use random chance to apply the modifier
             float Random = Math::RandRange(0.0f, 1.0f);
-            if (Random > Skill.StatModifierApplicationChance) {
+            if (Random >= Skill.StatModifierApplicationChance) {
                 return ESkillResult::SR_Fail;
             }
             Target.AddStatModifierByName(Skill.StatModifierToApply);

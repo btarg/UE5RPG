@@ -86,6 +86,10 @@ class AUnitBase : ACharacter
     UFUNCTION(BlueprintCallable, BlueprintEvent)
     void StartUnitTurn()
     {
+        if (BattleGameMode != nullptr) {
+            BattleGameMode.OnUnitTurnStarted.Broadcast(this);
+        }
+
         // do not start turn if dead
         if (CurrentHP <= 0)
         {
@@ -118,10 +122,10 @@ class AUnitBase : ACharacter
         TurnsLeft -= 1;
         if (TurnsLeft <= 0)
         {
-            ABattleGameModeBase GameMode = Cast<ABattleGameModeBase>(Gameplay::GetGameMode());
-            if (GameMode != nullptr)
+            if (BattleGameMode != nullptr)
             {
-                GameMode.ReadyNextTurn();
+                BattleGameMode.OnUnitTurnEnded.Broadcast(this);
+                BattleGameMode.ReadyNextTurn();
             }
         }
     }
